@@ -33,8 +33,10 @@ class VnExpressSpider(scrapy.Spider):
         category = response.meta.get('category')
         news_list = Selector(response)
 
-        # news_url_list = news_list.xpath('//h3[@class="title_news"]/a/@href').extract()
-        news_url_list = ['https://vnexpress.net/le-quyen-ban-trai-thiet-thoi-khi-yeu-toi-4552452.html']
+        news_url_list = news_list.xpath('//h3[@class="title_news"]/a/@href').extract()
+        # news_url_list = ['https://vnexpress.net/le-quyen-ban-trai-thiet-thoi-khi-yeu-toi-4552452.html']
+        print("############################################################")
+        print(len(news_url_list))
         for news_url in news_url_list:
             news_id = self.extract_id(news_url)
             if not news_id:
@@ -50,7 +52,8 @@ class VnExpressSpider(scrapy.Spider):
         news = Selector(response).xpath('//div[@class="sidebar-1"]')
 
         item = VnExpressItem()
-        item['_id'] = self.extract_id(response.meta.get('id'))
+        item['_id'] = response.meta.get('id')
+        item['source'] = self.name
         item['url'] = response.url
         item['category'] = CATEGORIES[response.meta.get('category')]
         item['title'] = self.extract_title(news)
@@ -59,7 +62,7 @@ class VnExpressSpider(scrapy.Spider):
         item['content'] = self.extract_content(news)
         item['author'] = self.extract_author(news)
 
-        print(item['content'])
+        yield item
 
     
     #######################
@@ -104,17 +107,11 @@ class VnExpressSpider(scrapy.Spider):
 
     def extract_content(self, news: Selector):
         try:
-            paragraphs = news.xpath(
-                '//article[@class="fck_detail "]//p[not(@class="Image")]//text()[normalize-space()]'
-            )
-            content_data = [
-                # ' '.join(p.xpath('//text()').getall())
-                p.extract()
-            for p in paragraphs]
+            content_data = news.xpath(
+                # '//article[@class="fck_detail "]//p[not(@class="Image")]//text()[normalize-space()]'
+                '//article[@class="fck_detail "]//p[@class="Normal"]/text()'
+            ).extract()
 
-            for x in content_data:
-                print('################')
-                print(x)
             return '\n'.join(content_data)
         except:
             return None

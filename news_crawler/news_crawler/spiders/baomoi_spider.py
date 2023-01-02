@@ -20,8 +20,6 @@ CATEGORIES = {
     'doi-song': 'Đời sống',
     'xe-co': 'Xe cộ',
     'nha-dat': 'Nhà đất',
-    # 'suc-khoe-y-te': 'Sức khoẻ - Y tế',
-    # 'du-lich': 'Du lịch'
 }
 
 class BaomoiSpider(scrapy.Spider):
@@ -47,7 +45,9 @@ class BaomoiSpider(scrapy.Spider):
         category = response.meta.get('category')
         news_list = Selector(response)
 
-        news_uri_list = news_list.xpath('//div[@class="bm_OS bm_s"]//div[@class="bm_B"]//h4[@class="bm_G"]/span/a/@href').extract()
+        # news_uri_list = news_list.xpath('//div[@class="bm_OS bm_s"]//div[@class="bm_B"]//h4[@class="bm_G"]/span/a/@href').extract()
+        news_uri_list = news_list.xpath('//div//div//h4/span/a/@href').extract()
+        
         for news_uri in news_uri_list:
             news_url = self.based_url + news_uri
 
@@ -65,8 +65,23 @@ class BaomoiSpider(scrapy.Spider):
     def parse_news(self, response: Response, **kwargs):
         news = Selector(response)
 
+        # print("+++++++++++++++++++++++++++++++++++++++++++++")
+        # print(self.extract_title(news))
+        # print("+++++++++++++++++++++++++++++++++++++++++++++")
+        # print(self.extract_datetime(news))
+        # print("+++++++++++++++++++++++++++++++++++++++++++++")
+        # print(self.extract_abstract(news))
+        # print("+++++++++++++++++++++++++++++++++++++++++++++")
+        # print(self.extract_content(news))
+        # print("+++++++++++++++++++++++++++++++++++++++++++++")
+        # print(self.extract_author(news))
+        # print("+++++++++++++++++++++++++++++++++++++++++++++")
+        # print(self.extract_keywords(news))
+        # print("+++++++++++++++++++++++++++++++++++++++++++++")
+
         item = BaoMoiItem()
         item['_id'] = self.extract_id(response.meta.get('id'))
+        item['source'] = self.name
         item['url'] = response.url
         item['category'] = CATEGORIES[response.meta.get('category')]
         item['title'] = self.extract_title(news)
@@ -77,7 +92,6 @@ class BaomoiSpider(scrapy.Spider):
         item['keywords'] = self.extract_keywords(news)
 
         yield item
-
 
     #######################
     ## EXTRACT FROM NEWS ##
@@ -92,8 +106,12 @@ class BaomoiSpider(scrapy.Spider):
 
     def extract_title(self, news: Selector):
         try:
+            # title_data = news.xpath(
+            #     '//h1[@class="bm_G"]/text()'
+            # ).extract()[0]
+
             title_data = news.xpath(
-                '//h1[@class="bm_G"]/text()'
+                '//h1/text()'
             ).extract()[0]
             return title_data
         except:
@@ -102,10 +120,15 @@ class BaomoiSpider(scrapy.Spider):
 
     def extract_datetime(self, news: Selector):
         try:
+            # datetime_data = news.xpath(
+            #     '//div[@class="bm_AL"]/time/@datetime'
+            # ).extract()[0]
+
             datetime_data = news.xpath(
-                '//div[@class="bm_AL"]/time/@datetime'
+                '//div/time/@datetime'
             ).extract()[0]
-            datetime_data = parser.parse(datetime_data)
+
+            # datetime_data = parser.parse(datetime_data)
             return datetime_data
         except:
             return None
@@ -113,8 +136,12 @@ class BaomoiSpider(scrapy.Spider):
 
     def extract_abstract(self, news: Selector):
         try:
+            # abstract_data = news.xpath(
+            #     '//h3[@class="bm_y bm_G"]/text()'
+            # ).extract()
+
             abstract_data = news.xpath(
-                '//h3[@class="bm_y bm_G"]/text()'
+                '//h3/text()'
             ).extract()
             return '\n'.join(abstract_data)
         except:
@@ -123,8 +150,12 @@ class BaomoiSpider(scrapy.Spider):
 
     def extract_content(self, news: Selector):
         try:
+            # content_data = news.xpath(
+            #     '//div[@class="bm_IM"]/p[@class="bm_BI"]/text()'
+            # ).extract()
+
             content_data = news.xpath(
-                '//div[@class="bm_IM"]/p[@class="bm_BI"]/text()'
+                '//div/p/text()'
             ).extract()
             return '\n'.join(content_data)
         except:
@@ -133,8 +164,11 @@ class BaomoiSpider(scrapy.Spider):
 
     def extract_author(self, news: Selector):
         try:
+            # author_data = news.xpath(
+            #     '//div[@class="bm_IM"]/p[@class="bm_BI bm_IP"]//text()'
+            # ).extract()[0]
             author_data = news.xpath(
-                '//div[@class="bm_IM"]/p[@class="bm_BI bm_IP"]//text()'
+                '//div/p/strong/text()'
             ).extract()[0]
             return author_data
         except:
@@ -143,8 +177,11 @@ class BaomoiSpider(scrapy.Spider):
 
     def extract_keywords(self, news: Selector):
         try:
+            # keywords_data  = news.xpath(
+            #     '//div[@class="bm_OQ"]/ul/li[@class="bm_Cr"]/a/text()'
+            # ).extract()
             keywords_data  = news.xpath(
-                '//div[@class="bm_OQ"]/ul/li[@class="bm_Cr"]/a/text()'
+                '//div/ul/li/a/text()'
             ).extract()
             return keywords_data
         except:

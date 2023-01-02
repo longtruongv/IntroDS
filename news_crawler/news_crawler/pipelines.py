@@ -11,37 +11,61 @@ from scrapy.exceptions import DropItem
 from scrapy.utils import log
 
 import pymongo
+import kafka
 
-class NewsCrawlerPipeline:
-    def process_item(self, item, spider):
-        return item
+import json
+import logging
 
+# class MongoDBPipeline(object):
+#     def __init__(self, mongo_server, mongo_port, mongo_db):
+#         connection = pymongo.MongoClient(
+#             mongo_server,
+#             mongo_port,
+#         )
+#         self.db = connection[mongo_db]
 
-class MongoDBPipeline(object):
-    def __init__(self,
-        mongo_server,
-        mongo_port,
-        mongo_db,
-    ):
-        connection = pymongo.MongoClient(
-            mongo_server,
-            mongo_port,
+#     @classmethod
+#     def from_crawler(cls, crawler):
+#         settings = crawler.settings
+#         return cls(
+#             mongo_server = settings.get('MONGO_SERVER'),
+#             mongo_port = settings.get('MONGO_PORT'),
+#             mongo_db = settings.get('MONGO_DB'),
+#         )
+
+#     def process_item(self, item, spider):
+#         collection = self.db[spider.name]
+#         collection.insert_one(dict(item))
+#         # log.msg("News added to MongoDB",
+#         #         level=log.DEBUG, spider=spider)
+        
+#         return item
+
+class KafkaPipeline(object):
+    def __init__(self, kafka_server, kafka_topic):
+        self.kafka_producer = kafka.KafkaProducer(
+            bootstrap_servers = kafka_server, 
+            value_serializer = lambda x: json.dumps(x).encode('utf-8')
         )
-        self.db = connection[mongo_db]
+
+        self.topic = kafka_topic
 
     @classmethod
     def from_crawler(cls, crawler):
         settings = crawler.settings
         return cls(
-            mongo_server = settings.get('MONGO_SERVER'),
-            mongo_port = settings.get('MONGO_PORT'),
-            mongo_db = settings.get('MONGO_DB'),
+            kafka_server = settings.get('KAFKA_SERVER'),
+            kafka_topic = settings.get('KAFKA_TOPIC'),
         )
-
+        
     def process_item(self, item, spider):
-        collection = self.db[spider.name]
-        collection.insert_one(dict(item))
-        # log.msg("News added to MongoDB",
-        #         level=log.DEBUG, spider=spider)
+        data = dict(item)
+    
+        try:
+            self.kafka_producer.send(self.topic, data).get(timeout=10)
+            logging.info(f"Sent data to topic {self.topic}: {data}")
+        except Exception as e:
+            logging.error(f"Error while sending data to topic {self.topic}: {data}")
+            logging.error(e)
         
         return item

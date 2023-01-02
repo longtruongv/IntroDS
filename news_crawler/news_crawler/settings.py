@@ -63,13 +63,16 @@ COOKIES_ENABLED = False
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-#    'news_crawler.pipelines.NewsCrawlerPipeline': 300,
-   'news_crawler.pipelines.MongoDBPipeline':300,
+#    'news_crawler.pipelines.MongoDBPipeline':300,
+   'news_crawler.pipelines.KafkaPipeline':300,
 }
 
 MONGO_SERVER = "localhost"
 MONGO_PORT = 27017
-MONGO_DB = "news"
+MONGO_DB = "news_crawled"
+
+KAFKA_SERVER = "localhost:9092"
+KAFKA_TOPIC = "news_crawled"
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

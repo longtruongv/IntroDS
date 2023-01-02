@@ -7,13 +7,11 @@ import scrapy
 
 
 class NewsCrawlerItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
-
-class BaoMoiItem(scrapy.Item):
     _id = scrapy.Field()
+    source = scrapy.Field()
     url = scrapy.Field()
+
+class BaoMoiItem(NewsCrawlerItem):
     category = scrapy.Field()
     title = scrapy.Field()
     datetime = scrapy.Field()
@@ -22,9 +20,7 @@ class BaoMoiItem(scrapy.Item):
     author = scrapy.Field()
     keywords = scrapy.Field()
 
-class VnExpressItem(scrapy.Item):
-    _id = scrapy.Field()
-    url = scrapy.Field()
+class VnExpressItem(NewsCrawlerItem):
     category = scrapy.Field()
     title = scrapy.Field()
     datetime = scrapy.Field()
